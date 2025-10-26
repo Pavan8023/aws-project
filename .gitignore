@@ -1,0 +1,14 @@
+# private keys
+network.pem
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+.vscode/
+*.log
+
+# python env / pycache
+__pycache__/
+venv/
+.env

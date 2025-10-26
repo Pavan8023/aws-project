@@ -3,7 +3,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Hello from Flask on EC2! how are you"
+    return "Hello from Flask on EC2!"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)  # use 8080 instead of 80
+    app.run(host="0.0.0.0", port=8080)
