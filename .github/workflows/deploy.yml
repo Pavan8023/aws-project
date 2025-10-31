@@ -7,7 +7,6 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -15,21 +14,30 @@ jobs:
       - name: Build and deploy container
         shell: bash
         run: |
-          set -e
-          echo "🚀 Starting deployment on EC2..."
+          set -euo pipefail
 
-          # Move to app folder
+          echo "🚀 Deploying on EC2…"
           mkdir -p ~/app
           cp -f app.py Dockerfile ~/app/
 
-          # Build Docker image
           cd ~/app
           docker build -t mywebapp:latest .
 
-          # Stop & replace the running container
+          # stop old container if exists
           docker rm -f webapp || true
+
+          # run mapping host:80 -> container:8080 (public) and host:8080 -> container:8080 (optional)
           docker run -d -p 80:8080 -p 8080:8080 --name webapp mywebapp:latest
 
-          # Verify container is running
-          docker ps
+          echo "⏳ Waiting for app to be ready…"
+          for i in {1..20}; do
+            if curl -fsS http://localhost/ >/dev/null; then
+              echo "✅ App is up"
+              break
+            fi
+            sleep 1
+          done
+
+          # final check + show brief docker info
           curl -fsS http://localhost/ | head -n1
+          docker ps
