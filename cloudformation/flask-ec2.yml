@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Flask Docker App on EC2
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Existing EC2 key pair name
+  InstanceType:
+    Type: String
+    Default: t2.micro
+  ImageId:
+    Type: AWS::EC2::Image::Id
+    Default: ami-0c02fb55956c7d316  # Amazon Linux 2 AMI (us-east-1)
+
+Resources:
+  FlaskInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Ref ImageId
+      SecurityGroupIds:
+        - !Ref FlaskSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y docker git
+          systemctl enable docker
+          systemctl start docker
+          cd /home/ec2-user
+          git clone https://github.com/Pavan8023/aws-project.git
+          cd aws-project
+          docker build -t flask-app .
+          docker run -d -p 80:8080 --name webapp flask-app
+
+  FlaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and SSH
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  PublicIP:
+    Value: !GetAtt FlaskInstance.PublicIp
+  PublicDNS:
+    Value: !GetAtt FlaskInstance.PublicDnsName
