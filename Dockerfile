@@ -1,10 +1,12 @@
-FROM python:3.9-slim
+# Use lightweight NGINX image
+FROM nginx:alpine
 
-WORKDIR /app
-COPY app.py /app
+# Copy your static HTML into NGINX’s default web root
+COPY index.html /usr/share/nginx/html/index.html
 
-RUN pip install --no-cache-dir flask
+# Expose web port
+EXPOSE 80
 
-EXPOSE 8080
+# Run NGINX in the foreground
+CMD ["nginx", "-g", "daemon off;"]
 
-CMD ["python", "app.py"]

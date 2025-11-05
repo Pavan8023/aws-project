@@ -31,8 +31,9 @@ Resources:
           cd /home/ec2-user
           git clone https://github.com/Pavan8023/aws-project.git
           cd aws-project
-          docker build -t flask-app .
-          docker run -d -p 80:8080 --name webapp flask-app
+          docker build -t nginx-app .
+          docker run -d -p 80:80 --name webapp nginx-app
+
 
   FlaskSecurityGroup:
     Type: AWS::EC2::SecurityGroup
