@@ -2,42 +2,27 @@ name: Deploy to EC2 Docker
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted   # your EC2 runner
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build and deploy container
-        shell: bash
+      - name: Build image
         run: |
-          set -euo pipefail
+          docker build -t nginx-app:latest .
 
-          echo "🚀 Deploying on EC2…"
-          mkdir -p ~/app
-          cp -f app.py Dockerfile ~/app/
+      - name: Recreate container
+        run: |
+          docker rm -f webapp 2>/dev/null || true
+          docker run -d --restart unless-stopped \
+            -p 80:80 \
+            --name webapp \
+            nginx-app:latest
 
-          cd ~/app
-          docker build -t mywebapp:latest .
-
-          # stop old container if exists
-          docker rm -f webapp || true
-
-          # run mapping host:80 -> container:8080 (public) and host:8080 -> container:8080 (optional)
-          docker run -d -p 80:8080 -p 8080:8080 --name webapp mywebapp:latest
-
-          echo "⏳ Waiting for app to be ready…"
-          for i in {1..20}; do
-            if curl -fsS http://localhost/ >/dev/null; then
-              echo "✅ App is up"
-              break
-            fi
-            sleep 1
-          done
-
-          # final check + show brief docker info
-          curl -fsS http://localhost/ | head -n1
+      - name: Verify
+        run: |
           docker ps
+          curl -i http://localhost/ | head -n 12
